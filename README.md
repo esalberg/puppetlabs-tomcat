@@ -242,6 +242,22 @@ Valid options: a string containing an absolute path.
 
 Default value: '/opt/apache-tomcat'.
 
+##### `dir_list`
+
+Specifies the sub-directories under $catalina_base to be managed for tomcat::instance (enabled via manage_dirs boolean).
+
+Valid options: Array of strings, each being a relative subdirectory.
+
+Default value: `['bin','conf','lib','logs','temp','webapps','work']`.
+
+##### `dir_mode`
+
+Specifies a mode for the sub-directories under $catalina_base that are managed for tomcat::instance (as specified in dir_list and enabled via manage_dirs boolean).
+
+Valid option: a string containing a standard Linux mode.
+
+Default value: '2770'.
+
 ##### `group`
 
 Specifies a default group to run Tomcat as.
@@ -253,6 +269,14 @@ Default value: 'tomcat'.
 ##### `install_from_source`
 
 Specifies whether to default to installing Tomcat from source.
+
+Valid options: `true` and `false`.
+
+Default value: `true`.
+
+##### `manage_dirs`
+
+Determines whether sub-directories for $catalina_base should be managed as part of tomcat::instance. The default directories to be managed are listed in params.pp (see dir_list).
 
 Valid options: `true` and `false`.
 

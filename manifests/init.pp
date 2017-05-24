@@ -27,6 +27,17 @@
 #
 # [*manage_properties*]
 #   Boolean specifying whether or not to manage the catalina.properties file. Defaults to true.
+#
+# [*manage_dirs*]
+#   Boolean specifying whether or not to manage sub-directories under $catalina_base.
+#   Defaults to true.
+#
+# [*dir_list*]
+#   Array of sub-directories to manage under $catalina_base.
+#   Defaults to tomcat::params::dir_list.
+#
+# [*dir_mode*]
+#   Mode to use for managed sub-directories under $catalina_base. Defaults to '2770'.
 class tomcat (
   $catalina_home       = $::tomcat::params::catalina_home,
   $user                = $::tomcat::params::user,
@@ -39,6 +50,9 @@ class tomcat (
   $manage_home         = true,
   $manage_base         = true,
   $manage_properties   = true,
+  $manage_dirs         = true,
+  $dir_list            = $::tomcat::params::dir_list,
+  $dir_mode            = $::tomcat::params::dir_mode,
 ) inherits ::tomcat::params {
   validate_bool($purge_connectors)
   validate_bool($purge_realms)
@@ -46,6 +60,9 @@ class tomcat (
   validate_bool($manage_group)
   validate_bool($manage_home)
   validate_bool($manage_base)
+  validate_bool($manage_dirs)
+  validate_array($dir_list)
+  validate_string($dir_mode)
 
   case $::osfamily {
     'windows','Solaris','Darwin': {

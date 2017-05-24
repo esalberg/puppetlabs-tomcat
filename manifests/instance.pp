@@ -22,6 +22,10 @@
 # - $package_options to pass extra options to the package resource.
 # - $user is the owner of the tomcat home and base. Default: $tomcat::user
 # - $group is the group of the tomcat home and base. Default: $tomcat::group
+# - $manage_dirs is whether to manage sub-directories under $catalina_base. Default: true
+# - $dir_list is an array of sub-directories to manage under $catalina_base.
+#   Default: tomcat::params::dir_list
+# - $dir_mode is the mode to use for sub-directories under $catalina_base. Default: '2770'
 define tomcat::instance (
   $catalina_home          = undef,
   $catalina_base          = undef,
@@ -35,6 +39,9 @@ define tomcat::instance (
   $java_home              = undef,
   $use_jsvc               = undef,
   $use_init               = undef,
+  $manage_dirs            = undef,
+  $dir_list               = undef,
+  $dir_mode               = undef,
 
   #used for single installs. Deprecated?
   $install_from_source    = undef,
@@ -55,6 +62,9 @@ define tomcat::instance (
   $_manage_group = pick($manage_group, $::tomcat::manage_group)
   $_manage_base = pick($manage_base, $::tomcat::manage_base)
   $_manage_properties = pick($manage_properties, $::tomcat::manage_properties)
+  $_manage_dirs = pick($manage_dirs, $::tomcat::manage_dirs)
+  $_dir_list = pick($dir_list, $::tomcat::dir_list)
+  $_dir_mode = pick($dir_mode, $::tomcat::dir_mode)
 
   if $source_url and $install_from_source == undef {
     # XXX Backwards compatibility mode enabled; install_from_source used to default
@@ -122,23 +132,19 @@ define tomcat::instance (
           group  => $_group,
         }
       }
-      $dir_list = [
-        "${_catalina_base}/bin",
-        "${_catalina_base}/conf",
-        "${_catalina_base}/lib",
-        "${_catalina_base}/logs",
-        "${_catalina_base}/temp",
-        "${_catalina_base}/webapps",
-        "${_catalina_base}/work",
-      ]
-      # Ensure install finishes before creating instances from it.
-      $home_sha = sha1($_catalina_home)
-      Tomcat::Install <| tag == $home_sha |> -> File[$dir_list]
-      file { $dir_list:
-        ensure => directory,
-        owner  => $_user,
-        group  => $_group,
-        mode   => '2770',
+      if $_manage_dirs {
+        $dirs = $_dir_list
+        # Ensure install finishes before creating instances from it.
+        $home_sha = sha1($_catalina_home)
+        Tomcat::Install <| tag == $home_sha |> -> File[$dirs]
+        $dirs.each |$dir| {
+          file { "${_catalina_base}/${dir}":
+            ensure => directory,
+            owner  => $_user,
+            group  => $_group,
+            mode   => $_dir_mode,
+          }
+        }
       }
       $copy_to_base_list = [
         "${_catalina_base}/conf/catalina.policy",
