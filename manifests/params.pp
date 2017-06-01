@@ -8,11 +8,12 @@
 # - The $group Tomcat runs as.
 # - The $dir_list of sub-directories to manage under $catalina_base
 # - The $dir_mode to use for sub-directories under $catalina_base
+# - The $copy_from_home_mode to use for initial files copied from $catalina_home.
 class tomcat::params {
-  $catalina_home = '/opt/apache-tomcat'
-  $user          = 'tomcat'
-  $group         = 'tomcat'
-  $dir_list      = [
+  $catalina_home       = '/opt/apache-tomcat'
+  $user                = 'tomcat'
+  $group               = 'tomcat'
+  $dir_list            = [
     'bin',
     'conf',
     'lib',
@@ -21,5 +22,6 @@ class tomcat::params {
     'webapps',
     'work',
   ]
-  $dir_mode      = '2770'
+  $dir_mode            = '2770'
+  $copy_from_home_mode = '0660'
 }
