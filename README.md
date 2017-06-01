@@ -242,6 +242,22 @@ Valid options: a string containing an absolute path.
 
 Default value: '/opt/apache-tomcat'.
 
+##### `copy_from_home`
+
+Specifies whether to copy the initial config files from $catalina_home to $catalina_base as part of tomcat::instance.
+
+Valid options: boolean.
+
+Default value: `true`.
+
+##### `copy_from_home_mode`
+
+Specifies the file mode when copying the initial config files from $catalina_home to $catalina_base as part of tomcat::instance.
+
+Valid options: a string containing a standard Linux mode.
+
+Default value: '0660'.
+
 ##### `dir_list`
 
 Specifies the sub-directories under $catalina_base to be managed for tomcat::instance (enabled via manage_dirs boolean).
