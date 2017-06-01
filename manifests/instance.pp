@@ -26,6 +26,9 @@
 # - $dir_list is an array of sub-directories to manage under $catalina_base.
 #   Default: tomcat::params::dir_list
 # - $dir_mode is the mode to use for sub-directories under $catalina_base. Default: '2770'
+# - $copy_from_home is whether to copy initial files from $catalina_home to $catalina_base. Default: true
+# - $copy_from_home_mode is the mode to use when copying initial files from $catalina_home
+#   to $catalina_base. Defaults to '0660'
 define tomcat::instance (
   $catalina_home          = undef,
   $catalina_base          = undef,
@@ -42,6 +45,8 @@ define tomcat::instance (
   $manage_dirs            = undef,
   $dir_list               = undef,
   $dir_mode               = undef,
+  $copy_from_home         = undef,
+  $copy_from_home_mode    = undef,
 
   #used for single installs. Deprecated.
   $install_from_source    = undef,
@@ -65,6 +70,8 @@ define tomcat::instance (
   $_manage_dirs = pick($manage_dirs, $::tomcat::manage_dirs)
   $_dir_list = pick($dir_list, $::tomcat::dir_list)
   $_dir_mode = pick($dir_mode, $::tomcat::dir_mode)
+  $_copy_from_home = pick($copy_from_home, $::tomcat::copy_from_home)
+  $_copy_from_home_mode = pick($copy_from_home_mode, $::tomcat::copy_from_home_mode)
 
   if $source_url and $install_from_source == undef {
     # XXX Backwards compatibility mode enabled; install_from_source used to default
@@ -134,16 +141,16 @@ define tomcat::instance (
         }
       }
       if $_manage_dirs {
-        $dirs = $_dir_list
         # Ensure install finishes before creating instances from it.
         $home_sha = sha1($_catalina_home)
-        Tomcat::Install <| tag == $home_sha |> -> File[$dirs]
-        $dirs.each |$dir| {
+        Tomcat::Install <| tag == $home_sha |> -> File <| tag == 'dir_list' |>
+        $_dir_list.each |$dir| {
           file { "${_catalina_base}/${dir}":
             ensure => directory,
             owner  => $_user,
             group  => $_group,
             mode   => $_dir_mode,
+            tag    => 'dir_list',
           }
         }
       }
@@ -154,10 +161,13 @@ define tomcat::instance (
         "${_catalina_base}/conf/server.xml",
         "${_catalina_base}/conf/web.xml",
       ]
-      tomcat::instance::copy_from_home { $copy_to_base_list:
-        catalina_home => $_catalina_home,
-        user          => $_user,
-        group         => $_group,
+      if $_copy_from_home {
+        tomcat::instance::copy_from_home { $copy_to_base_list:
+          catalina_home => $_catalina_home,
+          user          => $_user,
+          group         => $_group,
+          mode          => $_copy_from_home_mode,
+        }
       }
     }
     $_manage_service = pick($manage_service, true)
