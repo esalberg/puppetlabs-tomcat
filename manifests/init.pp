@@ -28,38 +28,11 @@
 # @param manage_properties
 #   Boolean specifying whether or not to manage the catalina.properties file. Defaults to true.
 #
-# [*manage_dirs*]
-#   Boolean specifying whether or not to manage sub-directories under $catalina_base.
-#   Defaults to true.
-#
-# [*dir_list*]
-#   Array of sub-directories to manage under $catalina_base.
-#   Defaults to tomcat::params::dir_list.
-#
-# [*dir_mode*]
-#   Mode to use for managed sub-directories under $catalina_base. Defaults to '2770'.
-#
-# [*copy_from_home*]
-#   Boolean specifying whether or not to copy the initial config files from $catalina_home to $catalina_base. Defaults to true.
-#
-# [*copy_from_home_mode*]
-#   The mode to use when copying the initial files from $catalina_home to $catalina_base.  Defaults to '0660'.
 class tomcat (
   $catalina_home             = '/opt/apache-tomcat',
   $user                      = 'tomcat',
   $group                     = 'tomcat',
   $install_from_source       = undef,
-  $dir_list                  = [
-    'bin',
-    'conf',
-    'lib',
-    'logs',
-    'temp',
-    'webapps',
-    'work',
-  ],
-  $dir_mode                  = '2770',
-  $copy_from_home_mode       = '0660',
   Boolean $purge_connectors  = false,
   Boolean $purge_realms      = false,
   Boolean $manage_user       = true,
@@ -67,8 +40,6 @@ class tomcat (
   Boolean $manage_home       = true,
   Boolean $manage_base       = true,
   Boolean $manage_properties = true,
-  Boolean $manage_dirs       = true,
-  Boolean $copy_from_home    = true,
 ) {
 
   if $install_from_source {

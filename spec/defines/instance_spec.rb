@@ -328,7 +328,7 @@ describe 'tomcat::instance', :type => :define do
       {
         catalina_home: '/opt/apache-tomcat',
         catalina_base: '/opt/apache-tomcat/foo',
-        copy_from_home: false,
+        manage_copy_from_home: false,
       }
     end
     it { is_expected.not_to contain_file('/opt/apache-tomcat/foo/conf/catalina.policy') }

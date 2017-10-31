@@ -26,7 +26,10 @@
 # - $dir_list is an array of sub-directories to manage under $catalina_base.
 #   Default: tomcat::params::dir_list
 # - $dir_mode is the mode to use for sub-directories under $catalina_base. Default: '2770'
-# - $copy_from_home is whether to copy initial files from $catalina_home to $catalina_base. Default: true
+# - $manage_copy_from_home is whether to copy initial files from $catalina_home to $catalina_base. Default: true
+# - $copy_from_home_list is an optional custom list of files to copy from $catalina_home
+#   to $catalina_base.  Supports log4j.
+#   Default: catalina.policy, context.xml, logging.properties, server.xml, web.xml
 # - $copy_from_home_mode is the mode to use when copying initial files from $catalina_home
 #   to $catalina_base. Defaults to '0660'
 define tomcat::instance (
@@ -42,11 +45,12 @@ define tomcat::instance (
   $java_home              = undef,
   $use_jsvc               = undef,
   $use_init               = undef,
-  $manage_dirs            = undef,
-  $dir_list               = undef,
-  $dir_mode               = undef,
-  $copy_from_home         = undef,
-  $copy_from_home_mode    = undef,
+  $manage_dirs            = true,
+  $dir_list               = ['bin','conf','lib','logs','temp','webapps','work'],
+  $dir_mode               = '2770',
+  $manage_copy_from_home  = true,
+  $copy_from_home_list    = undef,
+  $copy_from_home_mode    = '0660',
 
   #used for single installs. Deprecated.
   $install_from_source    = undef,
@@ -67,11 +71,6 @@ define tomcat::instance (
   $_manage_group = pick($manage_group, $::tomcat::manage_group)
   $_manage_base = pick($manage_base, $::tomcat::manage_base)
   $_manage_properties = pick($manage_properties, $::tomcat::manage_properties)
-  $_manage_dirs = pick($manage_dirs, $::tomcat::manage_dirs)
-  $_dir_list = pick($dir_list, $::tomcat::dir_list)
-  $_dir_mode = pick($dir_mode, $::tomcat::dir_mode)
-  $_copy_from_home = pick($copy_from_home, $::tomcat::copy_from_home)
-  $_copy_from_home_mode = pick($copy_from_home_mode, $::tomcat::copy_from_home_mode)
 
   if $source_url and $install_from_source == undef {
     # XXX Backwards compatibility mode enabled; install_from_source used to default
@@ -140,33 +139,39 @@ define tomcat::instance (
           group  => $_group,
         }
       }
-      if $_manage_dirs {
+      if $manage_dirs {
         # Ensure install finishes before creating instances from it.
         $home_sha = sha1($_catalina_home)
         Tomcat::Install <| tag == $home_sha |> -> File <| tag == 'dir_list' |>
-        $_dir_list.each |$dir| {
+        $dir_list.each |$dir| {
           file { "${_catalina_base}/${dir}":
             ensure => directory,
             owner  => $_user,
             group  => $_group,
-            mode   => $_dir_mode,
+            mode   => $dir_mode,
             tag    => 'dir_list',
           }
         }
       }
-      $copy_to_base_list = [
-        "${_catalina_base}/conf/catalina.policy",
-        "${_catalina_base}/conf/context.xml",
-        "${_catalina_base}/conf/logging.properties",
-        "${_catalina_base}/conf/server.xml",
-        "${_catalina_base}/conf/web.xml",
-      ]
-      if $_copy_from_home {
-        tomcat::instance::copy_from_home { $copy_to_base_list:
+      # Set default copy_from_home files list if not overridden; requires $_catalina_base
+      if $copy_from_home_list == undef {
+        $_copy_from_home_list = [
+          "${_catalina_base}/conf/catalina.policy",
+          "${_catalina_base}/conf/context.xml",
+          "${_catalina_base}/conf/logging.properties",
+          "${_catalina_base}/conf/server.xml",
+          "${_catalina_base}/conf/web.xml",
+        ]
+      }
+      else {
+        $_copy_from_home_list = $copy_from_home_list
+      }
+      if $manage_copy_from_home {
+        tomcat::instance::copy_from_home { $_copy_from_home_list:
           catalina_home => $_catalina_home,
           user          => $_user,
           group         => $_group,
-          mode          => $_copy_from_home_mode,
+          mode          => $copy_from_home_mode,
         }
       }
     }
